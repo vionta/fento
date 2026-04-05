@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<concert-list>
+   <shows>
+      <Concert>
+         <name>Estadio da Luz</name>
+         <event>
+            <Band>
+               <name>U2</name>
+               <event>
+                  <name/>
+               </event>
+            </Band>
+            <date/>
+            <name/>
+         </event>
+      </Concert>
+   </shows>
+</concert-list>
