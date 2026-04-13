@@ -15,10 +15,48 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * An utility class to edit files inside zip file sets.
+ */
 public class ZipFileUtil {
 
 	/**
-	 * Wriites the content to a zip file. 
+	 * Reads the content form a zip file. 
+	 * @param zipPath
+	 * @param filePath
+	 * @param content
+	 * @throws IOException
+	 */
+	public static String readTextFileInZip(String zipPath, String filePath) throws IOException {
+		Path zipFilePath = Paths.get(zipPath);
+		FileSystem fs = FileSystems.newFileSystem(zipFilePath,  ZipFileUtil.class.getClassLoader());
+		Path fileName = fs.getPath("/"+filePath);
+		return readZipFileContent(fileName);
+	}
+
+	/**
+	 * Writes content to a zip file.
+	 * @param fileName
+	 * @param content
+	 * @throws IOException 
+	 */
+	private static String readZipFileContent( Path fileName) throws IOException {
+		String content ="";
+		InputStream newInputStream = Files.newInputStream(fileName);
+		InputStreamReader inputStreamReader = new InputStreamReader(newInputStream);
+		String line;
+		BufferedReader br = new BufferedReader(inputStreamReader) ;
+		while ((line = br.readLine()) != null ) {
+			content += line;
+		}
+		br.close();
+		inputStreamReader.close();
+		newInputStream.close();
+		return content;
+	}
+	
+	/**
+	 * Writes the content to a zip file. 
 	 * @param zipPath
 	 * @param filePath
 	 * @param content
@@ -45,40 +83,4 @@ public class ZipFileUtil {
 		bw.close();
 	}
 
-	/**
-	 * Reads the content form a zip file. 
-	 * @param zipPath
-	 * @param filePath
-	 * @param content
-	 * @throws IOException
-	 */
-	public static String readTextFileInZip(String zipPath, String filePath) throws IOException {
-		Path zipFilePath = Paths.get(zipPath);
-		FileSystem fs = FileSystems.newFileSystem(zipFilePath,  ZipFileUtil.class.getClassLoader());
-		Path fileName = fs.getPath("/"+filePath);
-		return readZipFileContent(fileName);
-	}
-
-
-
-	/**
-	 * Writes content to a zip file.
-	 * @param fileName
-	 * @param content
-	 * @throws IOException 
-	 */
-	private static String readZipFileContent( Path fileName) throws IOException {
-		String content ="";
-		InputStream newInputStream = Files.newInputStream(fileName);
-		InputStreamReader inputStreamReader = new InputStreamReader(newInputStream);
-		String line;
-		BufferedReader br = new BufferedReader(inputStreamReader) ;
-		while ((line = br.readLine()) != null ) {
-			content += line;
-		}
-		br.close();
-		inputStreamReader.close();
-		newInputStream.close();
-		return content;
-	}
 }
