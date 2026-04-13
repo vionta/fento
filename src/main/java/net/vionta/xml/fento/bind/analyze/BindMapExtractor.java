@@ -15,12 +15,12 @@ import net.vionta.xml.fento.bind.annotation.Bind;
 import net.vionta.xml.fento.bind.serialize.CollectionDeserializeHelper;
 
 /**
- * Exptracts the object structure and associated 
+ * Extracts the object structure and associated 
  * mapping. 
  */
 public class BindMapExtractor {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(BindMapExtractor.class);
+	private static Logger log = LoggerFactory.getLogger(BindMapExtractor.class);
 
 	/**
 	 * Extracts the object mapping from 
@@ -29,7 +29,7 @@ public class BindMapExtractor {
 	 * @return
 	 */
 	public static ObjectDocumentMapping analyze(Serializable serializable) throws ClassNotFoundException {
-		LOGGER.debug(" Analyzing "+serializable.getClass().getName());
+		log.debug(" Analyzing "+serializable.getClass().getName());
 		int recursionFuse = 1; 
 		Bind mainBindAnnotation = serializable.getClass().getAnnotation(Bind.class); 
 		if(serializable == null 
@@ -40,7 +40,7 @@ public class BindMapExtractor {
 		mainMapping.setKey(mainBindAnnotation.key());
 		mainMapping.setPropertyName(serializable.getClass().getName());
 		mainMapping.setMappings(extractMappings(mainMapping.getMappings(), serializable.getClass(), recursionFuse));
-		LOGGER.debug(" Analyzed "+mainMapping);
+		log.debug(" Analyzed "+mainMapping);
 		return mainMapping;
 		
 	}
@@ -56,11 +56,11 @@ public class BindMapExtractor {
 	 */
 	private static ArrayList<Mapping> extractMappings(ArrayList<Mapping> mappings, 
 											Class clazzy,  int recursionFuse) throws ClassNotFoundException  {
-		LOGGER.debug(" Analyzing "+clazzy.getName());
+		log.debug(" Analyzing "+clazzy.getName());
 		if(recursionFuse> 500) throw new IllegalStateException("Too much recursion, probable mapping cycle");
 		Field[] declaredFields = clazzy.getDeclaredFields();
 		for (Field field: declaredFields) {
-			LOGGER.debug(" Feld "+field);
+			log.debug(" Feld "+field);
 			Bind bindAnnotation = field.getAnnotation(Bind.class);
 			if(bindAnnotation != null){
 				Class<?> clazz ;
@@ -68,9 +68,9 @@ public class BindMapExtractor {
 						 clazz = (Class<?>) field.getType();
 			            ParameterizedType pt = (ParameterizedType) field.getGenericType() ;
 			            Type[] typeArgs = pt.getActualTypeArguments();
-			            LOGGER.debug("Generic Type: " + typeArgs[0]);
+			            log.debug("Generic Type: " + typeArgs[0]);
 			            if(typeArgs[0] != null)   {
-			            	LOGGER.debug("-Class: " + typeArgs[0].getClass());
+			            	log.debug("-Class: " + typeArgs[0].getClass());
 			            	clazz  = Class.forName(typeArgs[0].getTypeName());
 			            }
 			            //TODO: Eliminar duplicidad codigo
