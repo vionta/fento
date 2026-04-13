@@ -20,6 +20,12 @@ public @interface Bind {
 	 */
 	public String expression() default "";
 
+	/**
+	 * Indicates if the attribute identifies the node element. 
+	 * 
+	 * @return boolean indicating that the attribute 
+	 * can be used to identify the node element.
+	 */
 	public boolean key() default false; 
 	
 	public int mode() default 1;
@@ -32,6 +38,18 @@ public @interface Bind {
 	 */
 	public String[] classNames()  default {};
 
+//	/**
+//	 * @return a list of the name space alias. Not supported by the implementation.
+//	 */
+// 	public String[] namespaceAlias()  default {};
+// 	/**
+// 	 * @return a list of the name space uris. Not supported by the implementation. 
+// 	 * use Q{"alias",
+// 	 */
+//	public String[] namespaceUris()  default {};
+
+
+	
 	public boolean auto() default false;
 	
 	/**
