@@ -1,19 +1,14 @@
 package net.vionta.xml.fento.repository.impl;
 
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.Serializable;
-import java.io.UncheckedIOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 
 import org.slf4j.Logger;
 import org.w3c.dom.Document;
 
-import net.vionta.xml.fento.bind.serialize.Deserialzer;
+import net.vionta.xml.fento.bind.serialize.Deserializer;
 import net.vionta.xml.fento.bind.serialize.Serializer;
 import net.vionta.xml.fento.repository.DocumentRepository;
 import net.vionta.xml.fento.repository.exception.PersistException;
@@ -36,16 +31,12 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 		this.fileNamePattern = fileNamePattern;
 	}
 	
-	@Override
-	public Object template() {
-		throw new IllegalStateException("This method has not been developped yet.");
-	}
 
 	@Override
-	public Object load(Serializable object) throws RetrieveException {
+	public <T extends Serializable> T load(T object) throws RetrieveException {
 		try {
 			String readTextFileInZip = ZipFileUtil.readTextFileInZip(zipFilePattern, fileNamePattern); 
-			return  object = new Deserialzer().deserialize(object,DocumentUtils.stringToDocument(readTextFileInZip));
+			return  object = (T) new Deserializer().deserialize(object,DocumentUtils.stringToDocument(readTextFileInZip));
 		} catch (Exception e) {
 			log .error(e.toString());
 			RetrieveException re = new RetrieveException();
@@ -93,6 +84,16 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 		}
 	}
 
+	@Override
+	public Document template() {
+		throw new IllegalStateException("This method has not been developped yet.");
+	}
+
+	@Override
+	public void remove(Serializable object) throws RetrieveException {
+		throw new IllegalStateException("This method has not been developped yet.");
+	}
+	
 	public String getZipFilePattern() {
 		return zipFilePattern;
 	}
