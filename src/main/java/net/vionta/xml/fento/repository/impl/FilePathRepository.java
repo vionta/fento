@@ -2,16 +2,12 @@ package net.vionta.xml.fento.repository.impl;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.io.Serializable;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
-import net.vionta.xml.fento.bind.serialize.Deserialzer;
+import net.vionta.xml.fento.bind.serialize.Deserializer;
 import net.vionta.xml.fento.bind.serialize.Serializer;
 import net.vionta.xml.fento.repository.DocumentRepository;
 import net.vionta.xml.fento.repository.exception.PersistException;
@@ -54,14 +50,14 @@ public class FilePathRepository implements DocumentRepository {
 	}
 
 	@Override
-	public Object load(Serializable object) throws RetrieveException  {
+	public <T extends Serializable>  T load(T object) throws RetrieveException  {
 		try {
 			// Calculate Path.
 			String adjustedPath = PathAdjust.adjustedPath(getFullPath(), object);
 
 			// Load 
 			Document documentContents = FileManager.readDocument(adjustedPath);
-			return  new Deserialzer().deserialize(object, documentContents);
+			return  (T) new Deserializer().deserialize(object, documentContents);
 		} catch (Exception e) {
 			log .error(e.toString());
 			RetrieveException re = new RetrieveException();
@@ -72,6 +68,23 @@ public class FilePathRepository implements DocumentRepository {
 			log .error(re.toString());
 			throw re;
 		}
+	}
+	
+
+	@Override
+	public Document template() {
+		return null;
+	}
+
+	@Override
+	public void persist(Serializable object) throws PersistException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void remove(Serializable object) throws RetrieveException {
+		throw new IllegalStateException("This method has not yet been implemented.");
 	}
 
 
@@ -95,10 +108,6 @@ public class FilePathRepository implements DocumentRepository {
 		this.basePath = basePath;
 	}
 
-	@Override
-	public Object template() {
-		return null;
-	}
 
 
 
