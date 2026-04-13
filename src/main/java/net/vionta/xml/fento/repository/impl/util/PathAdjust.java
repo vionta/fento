@@ -7,11 +7,21 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Adjusts the path (text file) based on the object properties 
+ * and the marker patterns { }
+ */
 public class PathAdjust {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(PathAdjust.class);
+	private static Logger log = LoggerFactory.getLogger(PathAdjust.class);
 	
+	/**
+	 * Marks the start of a property.
+	 */
 	public static final String START_PROPERTY_MARKER="{";
+	/**
+	 * Marks the end of a property.
+	 */
 	public static final String END_PROPERTY_MARKER="}";
 	
 	public static String adjustedPath(String path, Serializable vo) {
@@ -39,16 +49,16 @@ public class PathAdjust {
 		try {
 			paramValue = BeanUtils.getProperty(vo, paramName);
 		} catch (IllegalAccessException e) {
-			LOGGER.error(e.getMessage());
-			LOGGER.debug("Problems accessing {} property", paramName);
+			log.error(e.getMessage());
+			log.debug("Problems accessing {} property", paramName);
 			throw new IllegalStateException("Configuration property could not be accessed");
 		} catch (InvocationTargetException e) {
-			LOGGER.error(e.getMessage());
-			LOGGER.debug("Problems accessing {} property", paramName);
+			log.error(e.getMessage());
+			log.debug("Problems accessing {} property", paramName);
 			throw new IllegalStateException("Problems ocurred during the property Configuration");
 		} catch (NoSuchMethodException e) {
-			LOGGER.error(e.getMessage());
-			LOGGER.debug("Problems accessing {} property", paramName);
+			log.error(e.getMessage());
+			log.debug("Problems accessing {} property", paramName);
 			throw new IllegalStateException("Configuration property could not be found");
 		}
 		String resultingPath = path.replaceAll("\\"+START_PROPERTY_MARKER+paramName+"\\"+END_PROPERTY_MARKER, paramValue );
@@ -57,7 +67,7 @@ public class PathAdjust {
 	
 	private static String detectParamName(String path) {
 		//Take the start of the parameter
-		LOGGER.debug(" Detecting parameter on {} ", path);
+		log.debug(" Detecting parameter on {} ", path);
 		String pathRest = path.substring(path.indexOf(":")+1, path.length());
 		// look for the end of the parameter name
 		int nextSlashPosition = (pathRest.indexOf("/") >-1) ? pathRest.indexOf("/")  +1: pathRest.length()+1;
@@ -65,7 +75,7 @@ public class PathAdjust {
 		int paramEnd = (nextSlashPosition < nextDotPosition) ? nextSlashPosition : nextDotPosition;
 		//Return the parameter name
 		String paramName = pathRest.substring(0, paramEnd-1);
-		LOGGER.debug(" ParamName {} ", paramName);
+		log.debug(" ParamName {} ", paramName);
 		return paramName;
   	}               
 
