@@ -1,7 +1,7 @@
 package net.vionta.xml.fento.bind.serialize;
 
 import static net.vionta.xml.fento.bind.serialize.MappingHelper.isAttributeMapping;
-import static net.vionta.xml.fento.bind.serialize.XPathHelper.getXPath;
+import static net.vionta.xml.fento.bind.serialize.util.XPathHelper.getXPath;
 
 import java.awt.List;
 import java.io.Serializable;
@@ -22,6 +22,7 @@ import org.w3c.dom.NodeList;
 import net.vionta.xml.fento.bind.analyze.BindMapExtractor;
 import net.vionta.xml.fento.bind.analyze.map.Mapping;
 import net.vionta.xml.fento.bind.analyze.map.ObjectDocumentMapping;
+import net.vionta.xml.fento.bind.serialize.util.DeserializerHelper;
 import net.vionta.xml.fento.exception.BindingException;
 import net.vionta.xml.fento.exception.MappingException;
 
@@ -30,23 +31,16 @@ public class Serializer {
 		private static Logger log  = LoggerFactory.getLogger(Serializer.class);
 		
 		public Document serialize(Serializable mainObject, Document document) throws MappingException, BindingException, XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException, ClassNotFoundException {
-			
 			log.info("Serialzing Document  "+document);
-			 ObjectDocumentMapping mapping = BindMapExtractor.analyze(mainObject);
-			 
-			 log.info("With Mapping "+mapping);
-				
+			ObjectDocumentMapping mapping = BindMapExtractor.analyze(mainObject);
+			log.info("With Mapping "+mapping);
 //			mainObject = Deserialzer.getObjectInstance(mapping.getPropertyClass());
 //			log.debug("Main Object:  "+mainObject);
-			
 			String mainMappingExpression = mapping.getMappingExpression();
 			log.debug(" Mapping Expresion "+mainMappingExpression);
-			
-			Node mainNode =	Deserialzer.getClassNode(document,  mainMappingExpression);
+			Node mainNode =	DeserializerHelper.getClassNode(document,  mainMappingExpression);
 			log.debug(" Main Node  : "+mainNode);
-			
 			return serializeSubproperties(mainObject, mainNode,  mapping.getMappings(), document);
-						
 		}
 		
 	protected Document serializeSubproperties(Serializable parentObject, Node mainNode, ArrayList<Mapping> mappings, Document document) throws XPathExpressionException, 
@@ -62,7 +56,7 @@ public class Serializer {
 			String propertyName = currentMapping.getPropertyName();
 			log.debug(" Mapping Property Class : "+currentMapping.getPropertyClass());
 			
-			Serializable objectInstance = (Serializable) Deserialzer.getObjectInstance(currentMapping.getPropertyClass());
+			Serializable objectInstance = (Serializable) DeserializerHelper.getObjectInstance(currentMapping.getPropertyClass());
 			log.debug(" Mapping class Instance : "+objectInstance.getClass().getName());
 			
 			if (
