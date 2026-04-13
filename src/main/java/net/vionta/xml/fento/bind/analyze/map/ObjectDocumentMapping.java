@@ -1,5 +1,8 @@
 package net.vionta.xml.fento.bind.analyze.map;
 
+/**
+ * Main class of the mapping element.
+ */
 public class ObjectDocumentMapping extends BaseMapping {
 
 	@Override
