@@ -1,5 +1,9 @@
 package net.vionta.xml.fento.repository.exception;
 
+/**
+ * An exception thrown while trying to persist a java 
+ * class to a document.
+ */
 public class PersistException extends Exception {
 
 	protected String path;
@@ -26,7 +30,8 @@ public class PersistException extends Exception {
 	}
 	@Override
 	public String toString() {
-		return " A error has ocurred ["+sourceExpeption+"] while storing a document ("+ objectName +") at path=" + path ;
+		return " A error has ocurred ["+sourceExpeption+"] while storing "
+				+ "a document ("+ objectName +") at path=" + path ;
 		}
 	
 }
