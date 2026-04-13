@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import javax.xml.xpath.XPathExpressionException;
 
 import net.vionta.xml.fento.bind.annotation.Bind;
+import net.vionta.xml.fento.exception.MappingException;
 
 /**
  * Convenience methods for mapping calculations. 
@@ -57,12 +58,22 @@ public class MappingHelper {
 	 * @throws NoSuchMethodException
 	 * @throws NoSuchFieldException
 	 * @throws SecurityException
+	 * @throws MappingException 
 	 */
 	public static boolean isMappedClass(Serializable parentObject) 
-			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
-		Class<? extends Serializable> testedClass = parentObject.getClass();
-		Bind mainAnnotation = testedClass.getAnnotation(Bind.class); 
-		return (mainAnnotation != null); 
+			throws MappingException {
+		
+		try {
+			Class<? extends Serializable> testedClass = parentObject.getClass();
+			Bind mainAnnotation = testedClass.getAnnotation(Bind.class); 
+			return (mainAnnotation != null);
+		} catch (Exception e) {
+			MappingException mappingException = new MappingException();
+			mappingException.setException(e);
+			e.printStackTrace();
+			throw mappingException;
+		} 
+		
 	}
 
 	/**
