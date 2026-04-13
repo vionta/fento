@@ -2,6 +2,10 @@ package net.vionta.xml.fento.bind.analyze.map;
 
 import java.util.ArrayList;
 
+/**
+ * Subclasses that implements the iterative object 
+ * document mapping.
+ */
 public class Mapping extends BaseMapping {
 
 	public Mapping(String propertyName, String mappingExpression) {
