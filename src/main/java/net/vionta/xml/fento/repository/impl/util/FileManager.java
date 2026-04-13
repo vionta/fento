@@ -83,12 +83,13 @@ public class FileManager {
     public static Document readDocument(String path) throws IOException, SAXException, ParserConfigurationException {
     	LOGGER.info("Reading documment "+path);
     	File xmlFile = new File(path);
+//    	String fileContents = readFile(xmlFile.getPath());
 	    // Create a DocumentBuilder
 	    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	    factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
 	    DocumentBuilder builder = factory.newDocumentBuilder();
 	    // Parse the XML file
-	    Document document = builder.parse(xmlFile);
+	    Document document = builder.parse(xmlFile.getPath());
 	    return document;
     }
     
