@@ -1,8 +1,9 @@
 package net.vionta.xml.fento.bind.serialize;
 
-import static net.vionta.xml.fento.bind.serialize.MappingHelper.isAttributeMapping;
+
 import static net.vionta.xml.fento.bind.serialize.MappingHelper.isMapped;
 
+import java.awt.SecondaryLoop;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -21,10 +22,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import net.vionta.xml.fento.bind.analyze.map.Mapping;
+import net.vionta.xml.fento.bind.analyze.map.ObjectDocumentMapping;
 import net.vionta.xml.fento.bind.annotation.Bind;
+import net.vionta.xml.fento.bind.serialize.util.DeserializerHelper;
+import net.vionta.xml.fento.bind.serialize.util.XPathManager;
 import net.vionta.xml.fento.exception.BindingException;
 import net.vionta.xml.fento.exception.MappingException;
-import net.vionta.xml.fento.repository.impl.util.XPathManager;
 
 /**
  * Main deserializer class using Single and 
@@ -32,7 +35,7 @@ import net.vionta.xml.fento.repository.impl.util.XPathManager;
  */
 public class CollectionDeserializeHelper {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(CollectionDeserializeHelper.class);
+	private static Logger log = LoggerFactory.getLogger(CollectionDeserializeHelper.class);
 
 	/**
 	 * Returns true if the property is an instance of a considered collection node.
@@ -88,6 +91,23 @@ public class CollectionDeserializeHelper {
 	}
 
 	/**
+	 * Returns true if the property is an instance of a considered collection node.
+	 * @param parentObject
+	 * @return
+	 * @throws NoSuchMethodException 
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws SecurityException 
+	 * @throws NoSuchFieldException 
+	 */
+	public static boolean isSimpleValueType(Serializable parentObject, String propertyName, Mapping mapping) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException  {
+		Field declaredField = parentObject.getClass().getDeclaredField(propertyName);
+		return (declaredField.getType().equals(String.class) || 
+				declaredField.getType().equals(Integer.class) ||
+				declaredField.getType().equals(Float.class));
+	}
+
+	/**
 	 * @param parentObject
 	 * @param parentNode
 	 * @param mapping
@@ -102,21 +122,39 @@ public class CollectionDeserializeHelper {
 	 * @throws BindingException 
 	 * @throws MappingException 
 	 */
-	private Serializable deserializeSingleCollection(Serializable parentObject, Node parentNode, Mapping mapping) 
+	protected Serializable deserializeSingleCollection(Serializable parentObject, Node parentNode, Mapping mapping) 
 			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException, MappingException, BindingException {	
+		
+		log.debug(" Deserializincing Singe Collection: "+ mapping);
 		String propertyName = mapping.getPropertyName();
-		LOGGER.debug(" Deserializincing Singe Collection: "+ mapping);
+		Class propertyClass = mapping.getPropertyClass();
+		log.debug(" Property : "+propertyName+" - "+propertyClass);
 		List targetCollection = (List) PropertyUtils.getNestedProperty( parentObject, propertyName);
-		NodeList nodeList = (NodeList) XPathManager.buildXPath().evaluate(mapping.getMappingExpression(), parentNode, XPathConstants.NODESET);
+		log.debug(" targetCollection : "+targetCollection);
+		
+		
+		NodeList targetNodeList = (NodeList) XPathManager.buildXPath().evaluate(mapping.getMappingExpression(), parentNode, XPathConstants.NODESET);
 
-		for(int i =0 ; i<nodeList.getLength() ; i++) {
-			Node node = nodeList.item(i);
-			Serializable collectionElement = getCollectionTypeInstance(mapping.getPropertyClass());
-			Serializable deserializeSingleElement = deserializeSingleElement(collectionElement , node, mapping.getMappings());
-			targetCollection.add((Serializable)deserializeSingleElement);
+		for(int i =0 ; i<targetNodeList.getLength() ; i++) {
+			Node node = targetNodeList.item(i);
+			Serializable collectionElement = getCollectionTypeInstance( parentObject, propertyClass, mapping);
+			 
+			
+			
+			Bind elementAnnotation = collectionElement.getClass().getAnnotation(Bind.class); 
+			String elementExpression = (elementAnnotation==null) ? null : elementAnnotation.expression() ; 
+			if(elementExpression==null ) {
+				Serializable deserializeSingleElement = new Deserializer().deserializeSubproperties(collectionElement , node, mapping.getMappings());
+				targetCollection.add(deserializeSingleElement);
+			} else {
+				NodeList elementLevelNodeList = (NodeList) XPathManager.buildXPath().evaluate(elementExpression, node, XPathConstants.NODESET);
+				for(int e =0 ; e<elementLevelNodeList.getLength() ; e++) {
+					Node secondaryElementNode = elementLevelNodeList.item(e);
+					Serializable deserializeSingleElement = new Deserializer().deserializeSubproperties(collectionElement , secondaryElementNode, mapping.getMappings());
+					targetCollection.add(deserializeSingleElement);
+				}
+			}
 		}
-//		PropertyUtils.setNestedProperty(parentObject, propertyName, targetCollection);
-//		return parentObject;
 		return (Serializable) targetCollection;
 	}
 
@@ -137,11 +175,11 @@ public class CollectionDeserializeHelper {
 	 * @throws BindingException 
 	 * @throws MappingException 
 	 */
-	private Serializable deserializeMultipleCollection(Serializable parentObject, Node parentNode, Mapping collectionMapping) 
+	protected Serializable deserializeMultipleCollection(Serializable parentObject, Node parentNode, Mapping collectionMapping) 
 			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException, MappingException, BindingException {	
 		
 		String propertyName = collectionMapping.getPropertyName();
-		LOGGER.debug(" Deserializincing Multiple Collection: "+ collectionMapping);
+		log.debug(" Deserializincing Multiple Collection: "+ collectionMapping);
 		List targetCollection = (List) PropertyUtils.getNestedProperty( parentObject, propertyName);
 		NodeList listNodes =  (NodeList) XPathManager.buildXPath().evaluate(collectionMapping.getMappingExpression(), parentNode, XPathConstants.NODESET);
 		
@@ -157,7 +195,7 @@ public class CollectionDeserializeHelper {
 				
 				NodeList collectionElementNodes =  (NodeList) XPathManager.buildXPath().evaluate(elementMappinExpression, currentNode, XPathConstants.NODESET);
 				for(int e= 0 ; e< collectionElementNodes.getLength() ; e++) {
-					Serializable deserializedSingleElement = deserializeSingleElement((Serializable)propertyClass.newInstance(), collectionElementNodes.item(e), elementMapping.getMappings());
+					Serializable deserializedSingleElement = new Deserializer().deserializeSubproperties((Serializable)propertyClass.newInstance(), collectionElementNodes.item(e), elementMapping.getMappings());
 					targetCollection.add(deserializedSingleElement);
 				}
 				}
@@ -174,61 +212,120 @@ public class CollectionDeserializeHelper {
 	 * @throws NoSuchFieldException
 	 * @throws SecurityException
 	 * @throws InstantiationException 
+	 * @throws BindingException 
 	 */
-	public static Serializable getCollectionTypeInstance(Class clazz) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException, InstantiationException  {
+	public static Serializable getCollectionTypeInstance(Class clazz) throws BindingException  {
 		Type type = clazz.getGenericInterfaces()[0];
-		return (Serializable) type.getClass().newInstance();
+		return (Serializable) DeserializerHelper.getObjectInstance(type.getClass());
+	}
+
+	public static Serializable getCollectionTypeInstance(Serializable parentObject, Class elementClass, Mapping mapping) throws BindingException  {
+		if(mapping.getClass()!=null) return DeserializerHelper.getObjectInstance(mapping.getPropertyClass());
+		Type type = elementClass.getGenericInterfaces()[0];
+		return (Serializable) DeserializerHelper.getObjectInstance(type.getClass());
 	}
 
 	
-	protected Serializable deserializeSingleElement(Serializable object, Node mainNode, ArrayList<Mapping> mappings) throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException, MappingException, BindingException {
-		LOGGER.info(" Subproperties : "+ mainNode+ " Into "+object);
-		LOGGER.debug(" Parent Object Class: "+ object.getClass().getName());
-		LOGGER.debug(" Iterating overr subproperties : ------------------------------------- ");
+//	protected Serializable deserializeSingleElement(Serializable parentObject, Node mainNode, ArrayList<Mapping> mappings) throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException, MappingException, BindingException {
+//		log.info(" Subproperties : "+ mainNode+ " Into "+parentObject);
+//		if(parentObject!=null)
+//		log.debug(" Parent Object Class: "+ parentObject.getClass().getName());
+//		log.debug(" Iterating overr subproperties : ------------------------------------- ");
+//
+//		for(Mapping currentMapping : mappings) {
+//
+//			log.info(" Subproperty : "+ currentMapping.getMappingExpression() +" -> "+currentMapping.getPropertyName());
+//			String mappingExpression = currentMapping.getMappingExpression();
+//			String propertyName = currentMapping.getPropertyName();
+//			log.debug(" Subproperty Class : "+currentMapping.getPropertyClass());
+//
+//			Serializable objectInstance = (Serializable) DeserializerHelper.getObjectInstance(currentMapping.getPropertyClass());
+//			log.debug(" Object Instances: "+objectInstance.getClass().getName());
+//
+//			//Single collection
+//			if (isCollection(parentObject, propertyName))  {
+//				if(isSingleCollection(parentObject, propertyName)) {
+//					log.debug(" Getting Singe Node: "+ propertyName);
+//					PropertyUtils.setNestedProperty(parentObject, propertyName, deserializeSingleCollection(parentObject, mainNode, currentMapping));
+//				} else {
+//					log.debug(" Getting Singe Node: "+ propertyName);
+//					PropertyUtils.setNestedProperty(parentObject, propertyName, deserializeMultipleCollection(parentObject, mainNode, currentMapping));
+//				}
+//			} //Attributes
+//			else if(isAttributeMapping(mappingExpression) || (parentObject.getClass().getDeclaredField(propertyName).getClass().equals(String.class)))  {
+//				log.info(" Getting attribute: "+ propertyName);
+//				String attributeValue= (String) getXPath().evaluate(mappingExpression, mainNode,XPathConstants.STRING);
+//
+//				log.info(" Getting value: "+ attributeValue);
+//				PropertyUtils.setNestedProperty(parentObject,propertyName,attributeValue);
+//				//TODO:Ver el tipo de nodo y el tipo de resultado. 
+//				//Si colleccion: Node List
+//				//TODO:Revisar class por instance
+//			}	else if( parentObject.getClass().getDeclaredField(propertyName).getClass().equals(Vector.class) || 
+//					parentObject.getClass().getDeclaredField(propertyName).getClass().equals(ArrayList.class) ||
+//					parentObject.getClass().getDeclaredField(propertyName).getClass().equals(List.class)) {
+//				log.info(" Getting List: "+ propertyName);
+//		
+////				PropertyUtils.setNestedProperty(appender,appenderNameMapping.getPropertyName(), appenderName);
+//				NodeList nodeList = (NodeList) getXPath().evaluate(mappingExpression, mainNode,XPathConstants.NODESET);
+//				//TODO: Falta por hacer el binding de listas
+//				
+//				//Single object 
+//			} else {
+////				// Nos queda el nodo single
+////				log.debug(" Getting Single Node: "+ propertyName);
+////				Node currentNode = (Node) XPathManager.buildXPath().evaluate(mappingExpression, mainNode,XPathConstants.NODE);
+////				Serializable singleObject = (Serializable) PropertyUtils.getNestedProperty( parentObject, propertyName);
+////				
+////				Serializable deserializeSubproperties = (Serializable) new Deserializer().deserializeSubproperties(singleObject, currentNode, currentMapping.getMappings());
+////				PropertyUtils.setNestedProperty(parentObject, propertyName,  deserializeSubproperties);
+//			
+//				// Nos queda el nodo single
+//				log.debug(" Getting Single Node for: "+ propertyName);
+//				Node currentNode = (Node) getXPath().evaluate(mappingExpression, mainNode,XPathConstants.NODE);
+//				Serializable singleObject ;
+//				try {
+//					singleObject = (Serializable) PropertyUtils.getNestedProperty( parentObject, propertyName);
+//					log.debug(" Candidate Object: "+singleObject);
+//					if(singleObject==null ) {
+//						log.debug(" Candidate Object is null, getting instance of   "+currentMapping.getPropertyClass());
+//						singleObject = (Serializable) DeserializerHelper.getObjectInstance( currentMapping.getPropertyClass());
+//					}
+//					if(currentMapping.getPropertyClass()!=null && !currentMapping.getPropertyClass().equals(java.lang.String.class)) {
+//						Serializable deserializeSubproperties = (Serializable) new Deserializer().deserializeSubproperties(singleObject, currentNode, currentMapping.getMappings());
+//						log.debug(" Candidate Object is null, getting instance of   "+currentMapping.getPropertyClass());
+//						PropertyUtils.setNestedProperty(parentObject, propertyName, deserializeSubproperties);
+//					} else if(currentNode!=null && currentNode.getTextContent()!=null) PropertyUtils.setNestedProperty(parentObject, propertyName,  currentNode.getTextContent());
+//					
+//				} catch (Exception e) {
+//					log.error("Could not get  "+ propertyName+" property from "+parentObject );
+//					MappingException mappingException = new MappingException();
+//					mappingException.setSourceClassName((parentObject!= null) ? parentObject.getClass().getName(): null);
+//					mappingException.setTargetPropertyName(propertyName);
+//					mappingException.setException(e);
+//					log.error(mappingExpression);
+//					throw mappingException;
+//				}
+//			
+//			}
+//
+//		}
+//		return parentObject;
+//	}
 
-		for(Mapping currentMapping : mappings) {
 
-			LOGGER.info(" Subproperty : "+ currentMapping.getMappingExpression() +" -> "+currentMapping.getPropertyName());
-			String mappingExpression = currentMapping.getMappingExpression();
-			String propertyName = currentMapping.getPropertyName();
-			LOGGER.debug(" Subproperty Class : "+currentMapping.getPropertyClass());
-
-			Serializable objectInstance = (Serializable) new Deserialzer().getObjectInstance(currentMapping.getPropertyClass());
-			LOGGER.debug(" Object Instances: "+objectInstance.getClass().getName());
-
-			//Single collection
-			if (isCollection(object, propertyName))  {
-				if(isSingleCollection(object, propertyName)) {
-					LOGGER.debug(" Getting Singe Node: "+ propertyName);
-					PropertyUtils.setNestedProperty(object, propertyName, deserializeSingleCollection(object, mainNode, currentMapping));
-				} else {
-					LOGGER.debug(" Getting Singe Node: "+ propertyName);
-					PropertyUtils.setNestedProperty(object, propertyName, deserializeMultipleCollection(object, mainNode, currentMapping));
-				}
-			} //Attributes
-			else if(isAttributeMapping(mappingExpression) || (object.getClass().getDeclaredField(propertyName).getClass().equals(String.class)))  {
-				LOGGER.info(" Getting attribute: "+ propertyName);
-				String attributeValue= (String) XPathManager.buildXPath().evaluate(mappingExpression, mainNode,XPathConstants.STRING);
-
-				LOGGER.info(" Getting value: "+ attributeValue);
-				PropertyUtils.setNestedProperty(object,propertyName,attributeValue);
-				//TODO:Ver el tipo de nodo y el tipo de resultado. 
-				//Si colleccion: Node List
-				//TODO:Revisar class por instance
-			}	//Single object 
-			   else {
-				// Nos queda el nodo single
-				LOGGER.debug(" Getting Singe Node: "+ propertyName);
-				Node currentNode = (Node) XPathManager.buildXPath().evaluate(mappingExpression, mainNode,XPathConstants.NODE);
-				Serializable singleObject = (Serializable) PropertyUtils.getNestedProperty( object, propertyName);
-				Serializable deserializeSubproperties = (Serializable) new Deserialzer().deserializeSubproperties(singleObject, currentNode, currentMapping.getMappings());
-				PropertyUtils.setNestedProperty(object, propertyName,  deserializeSubproperties);
-			}
-
+	protected static Serializable deserializeCollection(Serializable parentObject, Node mainNode, Mapping currentMapping,
+			String propertyName) throws XPathExpressionException, InstantiationException, IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException, NoSuchFieldException, MappingException, BindingException {
+		if(CollectionDeserializeHelper.isSingleCollection(parentObject, propertyName)) {
+			log.debug(" Getting Singe Node: "+ propertyName);
+			Serializable deserializeSingleCollection = new CollectionDeserializeHelper().deserializeSingleCollection(parentObject, mainNode, currentMapping);
+			return deserializeSingleCollection;
+		} else {
+			log.debug(" Getting Singe Node: "+ propertyName);
+			Serializable deserializeMultipleCollection = new CollectionDeserializeHelper().deserializeMultipleCollection(parentObject, mainNode, currentMapping);
+			return deserializeMultipleCollection;
 		}
-		// TODO Auto-generated method stub
-		return object;
 	}
-
-
+	
 }
