@@ -10,6 +10,20 @@ public class PersistException extends Exception {
 	protected String objectName;
 	protected Exception sourceExpeption;
 	
+	public PersistException() {}
+	
+	public PersistException(Throwable cause, String path, String objectName, Exception sourceExpeption) {
+		super(cause);
+		this.path = path;
+		this.objectName = objectName;
+		this.sourceExpeption = sourceExpeption;
+	}
+	
+	public PersistException( String path, String objectName) {
+		this.path = path;
+		this.objectName = objectName;
+	}
+	
 	public String getPath() {
 		return path;
 	}
