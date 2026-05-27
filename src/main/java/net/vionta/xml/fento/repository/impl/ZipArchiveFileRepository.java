@@ -21,7 +21,14 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 
 	static Logger log  = getLogger(ZipArchiveFileRepository.class);
 
+	/**
+	 * The name pattern for the zip file. The main file that contains the zipped ones.
+	 */
 	private String zipFilePattern ;
+	
+	/**
+	 * Compressed file pattern inside the zip fileset. 
+	 */
 	private String fileNamePattern ; 
 
 	public ZipArchiveFileRepository() {}
@@ -34,7 +41,9 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 
 	@Override
 	public <T extends Serializable> T load(T object) throws RetrieveException {
+		log.debug(" Loading object from zip repository" +object);
 		try {
+			log.debug(" Zip parameters :" +zipFilePattern +" > "+fileNamePattern);
 			String readTextFileInZip = ZipFileUtil.readTextFileInZip(zipFilePattern, fileNamePattern); 
 			return  object = (T) new Deserializer().deserialize(object,DocumentUtils.stringToDocument(readTextFileInZip));
 		} catch (Exception e) {
@@ -51,7 +60,9 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 
 	@Override
 	public void persist(Serializable object, Document document) throws PersistException {
+		log.debug(" Persisting object on zip repository" +object );
 		try {
+			log.debug(" Zip parameters :" +zipFilePattern +" > "+fileNamePattern);
 			Document serialize = new Serializer().serialize(object, document);
 			ZipFileUtil.writeTextFileInZip(zipFilePattern, PathAdjust.adjustedPath(fileNamePattern, object), DocumentUtils.documentToString(document)); 
 		} catch (Exception e) {
@@ -60,7 +71,7 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 			re.setPath(fileNamePattern);
 			re.setSourceExpeption(e);
 			e.printStackTrace();
-			log .error("Error retrieving object from Http repository");
+			log .error("Error retrieving object from Zip repository");
 			log .error(re.toString());
 			throw re;
 		}
