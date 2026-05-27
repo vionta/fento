@@ -5,8 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-//import net.vionta.xml.repository.SET;
-//import net.vionta.xml.repository.UDATENEW;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.PACKAGE})
@@ -28,8 +26,12 @@ public @interface Bind {
 	 */
 	public boolean key() default false; 
 	
-	public int mode() default 1;
+	public int serializingMode() default SerializingMode.CREATE_ON_NOT_EXISTING;
+	public int deserializingMode() default DeserializingMode.AVOID_ON_NOT_EXISTING;
 	
+	public int collectionBindStrategy() default SerializingMode.BIND_COLLECTION_BY_KEY;
+	public int collectionDeleteUnmatched() default SerializingMode.COLLECTION_DELETE_UNMATCHED;
+
 	/**
 	 * A Java array with the class names of a 
 	 * collection contents.
@@ -38,16 +40,22 @@ public @interface Bind {
 	 */
 	public String[] classNames()  default {};
 
-//	/**
-//	 * @return a list of the name space alias. Not supported by the implementation.
-//	 */
-// 	public String[] namespaceAlias()  default {};
-// 	/**
-// 	 * @return a list of the name space uris. Not supported by the implementation. 
-// 	 * use Q{"alias",
-// 	 */
-//	public String[] namespaceUris()  default {};
+	/**
+	 * @return a list of the name space alias.  
+	 */
+ 	public String[] namespaceAlias()  default {};
 
+ 	 /**
+ 	 * @return a list of the name space uris.  
+ 	 * use Q{"alias",
+ 	 */
+	public String[] namespaceUris()  default {};
+
+	/**
+	 * Default namespace for the main document or element.
+	 * @return
+	 */
+	public String namespace()  default "";
 
 	
 	public boolean auto() default false;
