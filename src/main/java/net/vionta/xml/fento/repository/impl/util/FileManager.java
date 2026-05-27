@@ -1,8 +1,9 @@
 package net.vionta.xml.fento.repository.impl.util;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -24,7 +25,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.getLogger;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -94,12 +94,15 @@ public class FileManager {
     }
     
     public static String readFile(String path) throws IOException, SAXException, ParserConfigurationException {
-    	LOGGER.error("Reading file "+path);
+    	LOGGER.debug("Reading file "+path);
 	    Path filePath = FileSystems.getDefault().getPath(".", path);	
+//    	File newFile = new File(path);
+	    LOGGER.debug("Reading file "+filePath );
     	InputStream inputStream;
     	String contents = ""; 
 		try {
 			inputStream = Files.newInputStream(filePath);
+//			inputStream = Files.newInputStream(newFile);
 			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 			String line = null;
 			while ((line = bufferedReader.readLine()) != null) {
@@ -110,7 +113,7 @@ public class FileManager {
 		} catch (IOException e) {
 			LOGGER.error("Read file failed with cause:");
 			LOGGER.error(""+e.getCause());
-			return null; 
+			throw e; 
 		}
 	}                  
     
