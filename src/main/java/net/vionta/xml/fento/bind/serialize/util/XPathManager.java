@@ -10,7 +10,7 @@ public class XPathManager {
 	/**
 	 * @return XPath implementation.
 	 */
-	public static XPath buildXPath()  {
+	protected static XPath buildXPath()  {
 		XPath xPath = (new net.sf.saxon.xpath.XPathFactoryImpl()).newXPath();
 		return xPath;
 	}
