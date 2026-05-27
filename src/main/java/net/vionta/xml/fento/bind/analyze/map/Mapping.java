@@ -1,6 +1,7 @@
 package net.vionta.xml.fento.bind.analyze.map;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Subclasses that implements the iterative object 
@@ -26,11 +27,15 @@ public class Mapping extends BaseMapping {
 		this.mappings = mappings;
 	}
 
-
 	@Override
 	public String toString() {
-		return "Mapping [propertyName=" + propertyName + ", mappingExpression=" + mappingExpression + ", propertyClass="
-				+ propertyClass + ", propertyFormatter=" + propertyFormatter + ",\n     mappings=" + mappings + "]";
+		return "Mapping "
+				+ "\n [property : " + propertyName + " -> Exp : " + mappingExpression + ", (key: " + key
+				+ " - \n namespaces=" + namespaces + " \n  propertyClass=" + propertyClass + ", classes=" + collectionClasses + ", isMultilple="
+				+ isMultilple + ", propertyFormatter=" + propertyFormatter +" value="
+				+ value + ", Modes ser (" + serializeMode + ")  deser(" + deserializeMode
+				+ ")  bind(" + collectionBindStrategy + ") del("
+				+ collectionDeleteUnmatched + ") + \n  mappings=" + mappings + ", ]";
 	}
-	
+
 }
