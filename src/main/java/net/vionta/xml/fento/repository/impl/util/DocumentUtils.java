@@ -29,6 +29,17 @@ public class DocumentUtils {
 	 * @return
 	 * @throws TransformerException
 	 */
+	public static String convert(Document document) throws TransformerException {
+		return documentToString(document);
+	}
+	
+	/**
+	 * Extracts a W3C document to a String.
+	 * 
+	 * @param document
+	 * @return
+	 * @throws TransformerException
+	 */
 	public static String documentToString(Document document) throws TransformerException {
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	    Transformer transformer = transformerFactory.newTransformer();
@@ -56,5 +67,17 @@ public class DocumentUtils {
     Document document = builder.parse(new InputSource(new StringReader(content)));
     return document;
 	}	
-	
+	/**
+	 * Return a document from the xml contents.
+	 * 
+	 * @param content
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	public static Document convert(String content) throws ParserConfigurationException, SAXException, IOException {
+		return stringToDocument(content);
+	}
+
 }
