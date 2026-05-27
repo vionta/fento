@@ -12,6 +12,7 @@ import net.vionta.xml.fento.bind.serialize.Serializer;
 import net.vionta.xml.fento.repository.DocumentRepository;
 import net.vionta.xml.fento.repository.exception.PersistException;
 import net.vionta.xml.fento.repository.exception.RetrieveException;
+import net.vionta.xml.fento.repository.impl.util.ClasspathFileUtil;
 import net.vionta.xml.fento.repository.impl.util.DocumentUtils;
 import net.vionta.xml.fento.repository.impl.util.FileManager;
 import net.vionta.xml.fento.repository.impl.util.PathAdjust;
@@ -22,6 +23,8 @@ public class FilePathRepository implements DocumentRepository {
 
 	private String path = "" ; 
 	private String basePath = "" ; 
+	
+	private Document template; 
 
 	public FilePathRepository(String path) {
 		super();
@@ -78,8 +81,51 @@ public class FilePathRepository implements DocumentRepository {
 
 	@Override
 	public void persist(Serializable object) throws PersistException {
-		// TODO Auto-generated method stub
-		
+		try {
+			// Calculate Path.
+			String adjustedPath = PathAdjust.adjustedPath(getFullPath(), object);
+			// Load 
+			log .debug(" Adjusted Path"+adjustedPath );
+
+			String fileContent = FileManager.readFile(adjustedPath);
+			log .debug("File Content:"+fileContent);
+			Document documentContents = DocumentUtils.stringToDocument(fileContent);
+			Document serializedDocument = new Serializer().serialize(object, documentContents);
+			FileManager.writeFile(adjustedPath, DocumentUtils.documentToString(serializedDocument));
+		} catch (Exception e) {
+			log .error(e.toString());
+			PersistException re = new PersistException();
+			re.setPath(path);
+			re.setSourceExpeption(e);
+			e.printStackTrace();
+			log .error("Error retrieving object from Http repository");
+			log .error(re.toString());
+			throw re;
+		}
+	}
+
+	public void persistFromTemplate(Serializable object) throws PersistException {
+		try {
+			// Calculate Path.
+			String adjustedPath = PathAdjust.adjustedPath(getFullPath(), object);
+			// Load 
+			log .debug(" Adjusted Path"+adjustedPath );
+
+//			String fileContent = FileManager.readFile(adjustedPath);
+//			log .debug("File Content:"+fileContent);
+//			Document documentContents = DocumentUtils.stringToDocument(fileContent);
+			Document serializedDocument = new Serializer().serialize(object, template);
+			FileManager.writeFile(adjustedPath, DocumentUtils.documentToString(serializedDocument));
+		} catch (Exception e) {
+			log .error(e.toString());
+			PersistException re = new PersistException();
+			re.setPath(path);
+			re.setSourceExpeption(e);
+			e.printStackTrace();
+			log .error("Error retrieving object from Http repository");
+			log .error(re.toString());
+			throw re;
+		}
 	}
 
 	@Override
@@ -106,6 +152,14 @@ public class FilePathRepository implements DocumentRepository {
 
 	public void setBasePath(String basePath) {
 		this.basePath = basePath;
+	}
+
+	public Document getTemplate() {
+		return template;
+	}
+
+	public void setTemplate(Document template) {
+		this.template = template;
 	}
 
 
