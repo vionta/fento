@@ -1,6 +1,12 @@
 package net.vionta.xml.fento.bind.analyze.map;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import net.vionta.xml.fento.bind.annotation.DeserializingMode;
+import net.vionta.xml.fento.bind.annotation.SerializingMode;
 
 /**
  * Base Mapping class, that provides the list of attributes.
@@ -32,6 +38,23 @@ class BaseMapping {
 	 */
 	protected Class propertyClass;
 	
+	protected Map collectionClasses = new HashMap<Class, String>();
+//	
+//	/**
+//	 * The described collection classes, taken from the annotation 
+//	 * or from the collection generics definition.
+//	 * 
+//	 */
+//	protected List<Class> collectionClasses;
+//	
+//	/**
+//	 * The described collection classes, taken from the annotation 
+//	 * or from the collection generics definition.
+//	 */
+//	protected List<String> collectionClassExpressions;
+	
+	
+	
 	/**
 	 * Identifies if a collection may have more than one 
 	 * type of elements.
@@ -45,14 +68,20 @@ class BaseMapping {
 	 */
 	protected ArrayList<Mapping> mappings;
 	protected Object value;
+	
+	protected int serializeMode  = SerializingMode.CREATE_ON_NOT_EXISTING;
+	protected int deserializeMode  = DeserializingMode.AVOID_ON_NOT_EXISTING;
+	
+	protected int collectionBindStrategy = SerializingMode.BIND_COLLECTION_BY_KEY;
+	protected int collectionDeleteUnmatched = SerializingMode.COLLECTION_DELETE_UNMATCHED;
+
 	/**
 	 * A list of the namespaces of the current mapping
-	 * expression. 
-	 * NOT YET IN USE
+	 * expression.  
 	 * Namespaces can be added using Q{<alias>,<uri>} 
 	 * saxonica syntax.
 	 */
-	protected ArrayList<Namespace>[] namespaces ; 
+	protected Map<String, String> namespaces ;
 
 	
 	public String getPropertyName() {
@@ -120,14 +149,54 @@ class BaseMapping {
 		this.key = key;
 	}
 
-	public ArrayList<Namespace>[] getNamespace() {
+
+	public int getSerializeMode() {
+		return serializeMode;
+	}
+
+	public void setSerializeMode(int serializeMode) {
+		this.serializeMode = serializeMode;
+	}
+
+	public int getDeserializeMode() {
+		return deserializeMode;
+	}
+
+	public void setDeserializeMode(int deserializeMode) {
+		this.deserializeMode = deserializeMode;
+	}
+
+	public int getCollectionBindStrategy() {
+		return collectionBindStrategy;
+	}
+
+	public void setCollectionBindStrategy(int collectionBindStrategy) {
+		this.collectionBindStrategy = collectionBindStrategy;
+	}
+
+	public int getCollectionDeleteUnmatched() {
+		return collectionDeleteUnmatched;
+	}
+
+	public void setCollectionDeleteUnmatched(int collectionDeleteUnmatched) {
+		this.collectionDeleteUnmatched = collectionDeleteUnmatched;
+	}
+
+
+	public Map getCollectionClasses() {
+		return collectionClasses;
+	}
+
+	public void setCollectionClasses(Map collectionClasses) {
+		this.collectionClasses = collectionClasses;
+	}
+
+	public Map<String, String> getNamespaces() {
 		return namespaces;
 	}
 
-	public void setNamespace(ArrayList<Namespace>[] namespaces) {
+	public void setNamespaces(Map<String, String> namespaces) {
 		this.namespaces = namespaces;
 	}
-	
-	
 	
 }
