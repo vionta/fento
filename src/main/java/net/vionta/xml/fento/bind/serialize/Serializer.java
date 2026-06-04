@@ -113,7 +113,7 @@ public class Serializer {
 			
 			// Attribute
 			}  else if(isAttributeMapping(mappingExpression)) {
-						
+						log.debug(" Setting property : "+ mappingExpression);
 						Object nestedProperty = PropertyUtils.getNestedProperty(parentObject,propertyName);
 						Node attributeNode= (Node) 
 								getXPath(currentMapping.getNamespaces()).evaluate(mappingExpression, mainNode,XPathConstants.NODE);
