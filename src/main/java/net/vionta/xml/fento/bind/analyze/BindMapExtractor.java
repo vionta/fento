@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.vionta.xml.fento.bind.analyze.map.Mapping;
-import net.vionta.xml.fento.bind.analyze.map.Namespace;
 import net.vionta.xml.fento.bind.analyze.map.ObjectDocumentMapping;
 import net.vionta.xml.fento.bind.annotation.Bind;
 import net.vionta.xml.fento.bind.serialize.CollectionDeserializeHelper;
