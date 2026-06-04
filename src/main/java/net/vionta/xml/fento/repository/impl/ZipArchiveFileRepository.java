@@ -89,7 +89,7 @@ public class ZipArchiveFileRepository implements DocumentRepository {
 			re.setPath(fileNamePattern);
 			re.setSourceExpeption(e);
 			e.printStackTrace();
-			log .error("Error retrieving object from Http repository");
+			log .error("Error storing document on Zip repository");
 			log .error(re.toString());
 			throw re;
 		}
