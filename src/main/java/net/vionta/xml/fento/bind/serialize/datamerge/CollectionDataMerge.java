@@ -101,17 +101,31 @@ public class CollectionDataMerge {
 	public void setKeyNodeParameter(String keyNodeParameter) {
 		this.keyNodeParameter = keyNodeParameter;
 	}
+	
+	/**
+	 * Add object items and add the element key.
+	 * @param objectItems
+	 * @param propertyName
+	 * @throws MappingException
+	 */
 	public void setObjectItems(ArrayList<Object> objectItems, String propertyName) throws MappingException  {
 		for(Object object : objectItems) {
 			
 			CollectionItem cItem = new CollectionItem(object);
 			try {
 				cItem.key  = (String) PropertyUtils.getNestedProperty(object, propertyName);
-			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | IllegalArgumentException e) {
 				e.printStackTrace();
 				ExceptionHelper.treatMappingException("List", object.getClass().getName(), propertyName, crateNodeExpression, e, 
 						"A collection element key could not be obtained.");
 			}	
+			this.objectItems.add(cItem);
+		};
+	}
+	
+	public void setObjectItemsWithoutKey(ArrayList<Object> objectItems)   {
+		for(Object object : objectItems) {
+			CollectionItem cItem = new CollectionItem(object);
 			this.objectItems.add(cItem);
 		};
 	}
@@ -122,17 +136,17 @@ public class CollectionDataMerge {
 	public void setNodeItems(ArrayList<CollectionItem> nodeItems) {
 		this.nodeItems = nodeItems;
 	}
-	public void setNodeItems(NodeList nodes) throws XPathExpressionException {
-		for (int i = 0; i <= nodes.getLength(); i++) {
-			Node node = nodes.item(i);
-			CollectionItem cItem = new CollectionItem();
-			cItem.position = i; 
-			cItem.key = CollectionSerializerHelper.getKeyValue(node, this.keyNodeExpression ); 
-			cItem.keyNodeExpression = this.keyNodeExpression;
-			cItem.node=node;
-			this.nodeItems.add(cItem);
-		}
-	}
+//	public void setNodeItems(NodeList nodes) throws XPathExpressionException {
+//		for (int i = 0; i <= nodes.getLength(); i++) {
+//			Node node = nodes.item(i);
+//			CollectionItem cItem = new CollectionItem();
+//			cItem.position = i; 
+//			cItem.key = CollectionSerializerHelper.getKeyValue(node, this.keyNodeExpression ); 
+//			cItem.keyNodeExpression = this.keyNodeExpression;
+//			cItem.node=node;
+//			this.nodeItems.add(cItem);
+//		}
+//	}
 	
 	/**
 	 * Gets the list of object keys as an array of strings.
