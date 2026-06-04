@@ -39,12 +39,16 @@ public @interface Bind {
 	 * @return Collection elements class names.
 	 */
 	public String[] classNames()  default {};
+	
+	
 
 	/**
 	 * @return a list of the name space alias.  
 	 */
  	public String[] namespaceAlias()  default {};
 
+ 	public namespace[] namespaces() default {};
+ 	
  	 /**
  	 * @return a list of the name space uris.  
  	 * use Q{"alias",
@@ -55,7 +59,7 @@ public @interface Bind {
 	 * Default namespace for the main document or element.
 	 * @return
 	 */
-	public String namespace()  default "";
+//	public String namespace()  default "";
 
 	
 	public boolean auto() default false;
