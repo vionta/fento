@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import javax.xml.xpath.XPathExpressionException;
 
+import net.vionta.xml.fento.bind.analyze.map.Mapping;
 import net.vionta.xml.fento.bind.annotation.Bind;
 import net.vionta.xml.fento.exception.MappingException;
 
@@ -25,7 +26,9 @@ public class MappingHelper {
 	 */
 	public static boolean isAttributeMapping( String mappingExpression) {
 		if(mappingExpression == null ||  mappingExpression.isEmpty()) return false;
-		Pattern pattern = Pattern.compile("\\/@[\\w\\-]+$|\\/@\\w+:[\\w\\-]+$");
+//		Pattern pattern = Pattern.compile("\\/@[\\w-]+$|\\/@\\w+:[\\w-]+$");
+//		Pattern pattern = Pattern.compile("@[\\w-]:[\\w-]+\\/@[\\w-]+$|\\/@\\w+:[\\w-]+$");
+        Pattern pattern = Pattern.compile("([\\/\\w\\*\\:-]*\\/)?(@[\\w\\*][\\w-]*:?[\\w][\\w-]*[\\w])+$");
 		Matcher matcher = pattern.matcher(mappingExpression);
 		return matcher.find();	
 	}
@@ -42,11 +45,17 @@ public class MappingHelper {
 	 * @throws NoSuchFieldException
 	 * @throws SecurityException
 	 */
-	public static boolean isMapped(Serializable parentObject, String propertyName) 
+	public static boolean isMapped(Serializable parentObject, String propertyName, Mapping mapping) 
 			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
 		Bind annotation = parentObject.getClass().getDeclaredField(propertyName).getAnnotation(Bind.class); 
-		return (annotation != null && annotation.expression() != null && !(annotation.expression().isEmpty())); 
+		// Check the collection mapping
+		boolean collectionAnnotation = (mapping!=null && mapping.getMappingExpression()!= "" );
+		if(collectionAnnotation) return true;
+		// Check if the mapping is on the collection elements.
+		boolean elementAnnotation = mapping.getMappings().get(0) != null && mapping.getMappings().get(0).getMappingExpression() != null && mapping.getMappings().get(0).getMappingExpression() != "";
+		return elementAnnotation ; 
 	}
+
 	/**
 	 * @param parentObject
 	 * @param propertyName
@@ -76,39 +85,39 @@ public class MappingHelper {
 		
 	}
 
-	/**
-	 * Returns true if the property is an instance of a considered collection node.
-	 * @param parentObject
-	 * @return
-	 */
-	public static boolean isSingleCollection(Serializable parentObject, String propertyName) 
-			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
-		if(!isCollection(parentObject, propertyName)  || !isMapped(parentObject, propertyName)) return false;
-		Bind annotation = parentObject.getClass().getDeclaredField(propertyName).getAnnotation(Bind.class); 
-		if(annotation.classNames() == null || annotation.classNames().length <= 1) return true;
-		return false;
-	}
+//	/**
+//	 * Returns true if the property is an instance of a considered collection node.
+//	 * @param parentObject
+//	 * @return
+//	 */
+//	public static boolean isSingleCollection(Serializable parentObject, String propertyName) 
+//			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
+//		if(!isCollection(parentObject, propertyName)  || !isMapped(parentObject, propertyName)) return false;
+//		Bind annotation = parentObject.getClass().getDeclaredField(propertyName).getAnnotation(Bind.class); 
+//		if(annotation.classNames() == null || annotation.classNames().length <= 1) return true;
+//		return false;
+//	}
 
-	/**
-	 * Returns true if the collection is mapped with the fento annotation. 
-	 * 
-	 * @param parentObject
-	 * @param parentNode
-	 * @param mappings
-	 * @param propertyName
-	 * @return
-	 * @throws XPathExpressionException
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
-	 * @throws NoSuchMethodException
-	 * @throws NoSuchFieldException
-	 * @throws SecurityException
-	 */
-	public static boolean isMappedCollection(Serializable parentObject, String propertyName) 
-			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
-		return  isCollection(parentObject, propertyName)  && isMapped(parentObject, propertyName);
-	}
+//	/**
+//	 * Returns true if the collection is mapped with the fento annotation. 
+//	 * 
+//	 * @param parentObject
+//	 * @param parentNode
+//	 * @param mappings
+//	 * @param propertyName
+//	 * @return
+//	 * @throws XPathExpressionException
+//	 * @throws InstantiationException
+//	 * @throws IllegalAccessException
+//	 * @throws InvocationTargetException
+//	 * @throws NoSuchMethodException
+//	 * @throws NoSuchFieldException
+//	 * @throws SecurityException
+//	 */
+//	public static boolean isMappedCollection(Serializable parentObject, String propertyName) 
+//			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
+//		return  isCollection(parentObject, propertyName)  && isMapped(parentObject, propertyName);
+//	}
 
 	/**
 	 * Returns true if the property is an instance of a considered collection node.
@@ -127,4 +136,15 @@ public class MappingHelper {
 				declaredField.getType().equals(List.class));
 	}
 
+	
+	public static void main(String[] args) {
+//		String mappingExpression = "@office:value-type";
+		String mappingExpression = "@offijce:value-type";
+//		if(mappingExpression == null ||  mappingExpression.isEmpty()) return false;
+//		Pattern pattern = Pattern.compile("(@[\\w-]:[\\w-])+(@[\\w]:[\\w-])+(@[\\w-]:[\\w])");
+		Pattern pattern = Pattern.compile("@[\\w-*]:?[\\w-*]");
+//		Pattern pattern = Pattern.compile("@[\\w-]:[\\w-]+\\/@[\\w-]+$|\\/@\\w+:[\\w-]+$");
+		Matcher matcher = pattern.matcher(mappingExpression);
+		System.out.println( "Ok: "+matcher.find());	
+	}
 }
