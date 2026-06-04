@@ -1,5 +1,7 @@
 package net.vionta.xml.fento.bind.serialize.datamerge;
 
+import java.util.Collection;
+
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 
@@ -59,19 +61,36 @@ public class DataMergeBuilder {
 			//Single collection (main create mappings at collection level).
 		} else {
 
+			if(dataMerge.getMappingEstrategy() == SerializingMode.BIND_COLLECTION_BY_KEY) {
+				Object[] classesArray = currentMapping.getCollectionClasses().keySet().toArray();
+				if (classesArray.length == 1) {
+					Object firstClass = classesArray[0];
+					dataMerge.setClassNode((Class)firstClass);
+					String elementMappingExpression = (String) currentMapping.getCollectionClasses().get(firstClass);
+					dataMerge.setCrateNodeExpression(elementMappingExpression);
+					dataMerge.setCreatePossible(Serializer.isMappingSimple( elementMappingExpression));  
+					//Add node elements and objects expressions
+					String[] keyParameters =  findKeyNodeExpression(currentMapping);
+					dataMerge.setKeyNodeExpression(keyParameters[0]);
+					dataMerge.setKeyNodeParameter(keyParameters[1]);
+				}
+			} else if (dataMerge.getMappingEstrategy() == SerializingMode.BIND_COLLECTION_BY_POSITION) {
+				
+				Object[] classesArray = currentMapping.getCollectionClasses().keySet().toArray();
+				if (classesArray.length == 1) {
+					Object firstClass = classesArray[0];
+					dataMerge.setClassNode((Class)firstClass);
+					String elementMappingExpression = (String) currentMapping.getCollectionClasses().get(firstClass);
+					dataMerge.setCrateNodeExpression(elementMappingExpression);
+					dataMerge.setCreatePossible(Serializer.isMappingSimple( elementMappingExpression));  
+					
+				}
 			
-			Object[] classesArray = currentMapping.getCollectionClasses().keySet().toArray();
-			if (classesArray.length == 1) {
-				Object firstClass = classesArray[0];
-				dataMerge.setClassNode((Class)firstClass);
-				String elementMappingExpression = (String) currentMapping.getCollectionClasses().get(firstClass);
-				dataMerge.setCrateNodeExpression(elementMappingExpression);
-				dataMerge.setCreatePossible(Serializer.isMappingSimple( elementMappingExpression));  
-				//Add node elements and objects expressions
-				String[] keyParameters =  findKeyNodeExpression(currentMapping);
-				dataMerge.setKeyNodeExpression(keyParameters[0]);
-				dataMerge.setKeyNodeParameter(keyParameters[1]);
-			}
+			} else if (dataMerge.getMappingEstrategy() == SerializingMode.BIND_COLLECTION_FULL_RESET) {
+			
+			
+		} 
+			 
 		}
 		return dataMerge;
 	}
@@ -90,8 +109,8 @@ public class DataMergeBuilder {
 			if(nestedMappings.isKey()) {
 				keyNodeExpression[0] = nestedMappings.getMappingExpression();
 				keyNodeExpression[1] = nestedMappings.getPropertyName();
+				return keyNodeExpression;
 			}
-			return keyNodeExpression;
 		}
 		//change to mapping exception
 		log.warn("A key property was not defined for object " +currentMapping.getPropertyName());
@@ -102,7 +121,7 @@ public class DataMergeBuilder {
 		
 		String collectionMappingExpression = currentMapping.getMappingExpression();
 		
-		boolean collectionExpression = (collectionMappingExpression != null && collectionMappingExpression != "");
+		boolean collectionExpression = (collectionMappingExpression != null && !"".equals(collectionMappingExpression));
 		
 		try {
 		
@@ -129,7 +148,7 @@ public class DataMergeBuilder {
 				if(SerializingMode.BIND_COLLECTION_BY_KEY== dataMerge.getMappingEstrategy()) {
 					String nodeKey = (String) buildXPath.evaluate(dataMerge.getKeyNodeExpression(), item.node, XPathConstants.STRING);
 					item.key= nodeKey;
-				}
+				} // Pendiente por posicion 
 				item.position=i;
 				dataMerge.getNodeItems().add(item);
 				
