@@ -29,6 +29,7 @@ import net.vionta.xml.fento.bind.serialize.util.DeserializerHelper;
 import net.vionta.xml.fento.bind.serialize.util.XPathHelper;
 import net.vionta.xml.fento.bind.serialize.util.XPathManager;
 import net.vionta.xml.fento.exception.BindingException;
+import net.vionta.xml.fento.exception.ExceptionHelper;
 import net.vionta.xml.fento.exception.MappingException;
 
 /**
@@ -44,34 +45,34 @@ public class CollectionDeserializeHelper {
 	 * @param parentObject
 	 * @return
 	 */
-	public static boolean isSingleCollection(Serializable parentObject, String propertyName) 
+	public static boolean isSingleCollection(Serializable parentObject, String propertyName, Mapping mapping) 
 			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
-		if(!isCollection(parentObject, propertyName)  || !isMapped(parentObject, propertyName)) return false;
+		if(!isCollection(parentObject, propertyName)  || !isMapped(parentObject, propertyName, mapping)) return false;
 		Bind annotation = parentObject.getClass().getDeclaredField(propertyName).getAnnotation(Bind.class); 
 		if(annotation.classNames() == null || annotation.classNames().length <= 1) return true;
 		return false;
 	}
 
-	/**
-	 * Returns true if the collection is mapped with the fento annotation. 
-	 * 
-	 * @param parentObject
-	 * @param parentNode
-	 * @param mappings
-	 * @param propertyName
-	 * @return
-	 * @throws XPathExpressionException
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
-	 * @throws NoSuchMethodException
-	 * @throws NoSuchFieldException
-	 * @throws SecurityException
-	 */
-	public static boolean isMappedCollection(Serializable parentObject, String propertyName) 
-			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
-		return  isCollection(parentObject, propertyName)  && isMapped(parentObject, propertyName);
-	}
+//	/**
+//	 * Returns true if the collection is mapped with the fento annotation. 
+//	 * 
+//	 * @param parentObject
+//	 * @param parentNode
+//	 * @param mappings
+//	 * @param propertyName
+//	 * @return
+//	 * @throws XPathExpressionException
+//	 * @throws InstantiationException
+//	 * @throws IllegalAccessException
+//	 * @throws InvocationTargetException
+//	 * @throws NoSuchMethodException
+//	 * @throws NoSuchFieldException
+//	 * @throws SecurityException
+//	 */
+//	public static boolean isMappedCollection(Serializable parentObject, String propertyName) 
+//			throws XPathExpressionException, InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, SecurityException {
+//		return  isCollection(parentObject, propertyName)  && isMapped(parentObject, propertyName);
+//	}
 
 
 
@@ -143,7 +144,7 @@ public class CollectionDeserializeHelper {
 	protected static Serializable deserializeCollection(Serializable parentObject, Node mainNode, Mapping currentMapping,
 			String propertyName) throws XPathExpressionException, InstantiationException, IllegalAccessException,
 			InvocationTargetException, NoSuchMethodException, NoSuchFieldException, MappingException, BindingException {
-		if(CollectionDeserializeHelper.isSingleCollection(parentObject, propertyName)) {
+		if(CollectionDeserializeHelper.isSingleCollection(parentObject, propertyName,currentMapping)) {
 			log.debug(" Getting Singe Node: "+ propertyName);
 			Serializable deserializeSingleCollection = new CollectionDeserializeHelper().deserializeSingleCollection(parentObject, mainNode, currentMapping);
 			return deserializeSingleCollection;
@@ -184,7 +185,7 @@ public class CollectionDeserializeHelper {
 		String mainMappingExpression = mapping.getMappingExpression() ;
 		boolean  mainMappingExpressionEmpty = false ;
 		
-		if(mainMappingExpression == null || "".equals(parentObject))  mainMappingExpressionEmpty =true; 
+		if(mainMappingExpression == null || "".equals(mainMappingExpression))  mainMappingExpressionEmpty =true; 
 		
 		String elementMappingExpression = "";
 		
@@ -240,6 +241,15 @@ public class CollectionDeserializeHelper {
 		return (Serializable) targetCollection;
 	}
 
+	private String getMappingExpression(boolean mainMappingExpressionEmpty, String mappingExpression, boolean elementMappingExpressionEmpty, String elementMappingExpression) throws MappingException {
+		if(mainMappingExpressionEmpty && !elementMappingExpressionEmpty) return elementMappingExpression;
+		else if (!mainMappingExpressionEmpty && elementMappingExpressionEmpty) return mappingExpression;
+		else if(!mainMappingExpressionEmpty && !elementMappingExpressionEmpty) return mappingExpression +"/" + elementMappingExpression;
+		ExceptionHelper.treatMappingException("", "", "","",null, "Could not retrieve a mapping for collection, both collection and element expressions are empty");
+		//Can't touch this
+		return null;
+	}
+
 	/**
 	 * Multiple element collection, a collection that has more than one possible sub-element.
 	 * 
@@ -263,7 +273,7 @@ public class CollectionDeserializeHelper {
 		String propertyName = collectionMapping.getPropertyName();
 		log.debug(" Deserializincing Multiple Collection: "+ collectionMapping);
 		List targetCollection = (List) PropertyUtils.getNestedProperty( parentObject, propertyName);
-		NodeList listNodes =  (NodeList) XPathManager.buildXPath().evaluate(collectionMapping.getMappingExpression(), parentNode, XPathConstants.NODESET);
+		NodeList listNodes =  (NodeList) XPathHelper.getXPath(collectionMapping.getNamespaces()).evaluate(collectionMapping.getMappingExpression(), parentNode, XPathConstants.NODESET);
 		
 		ArrayList<Mapping>  collectionClassesMappings = collectionMapping.getMappings();
 		
@@ -275,7 +285,7 @@ public class CollectionDeserializeHelper {
 				Class propertyClass = elementMapping.getPropertyClass();
 				String elementMappinExpression = elementMapping.getMappingExpression();
 				
-				NodeList collectionElementNodes =  (NodeList) XPathHelper.getXPath(mapping.getNamespaces())
+				NodeList collectionElementNodes =  (NodeList) XPathHelper.getXPath(collectionMapping.getNamespaces())
 												.evaluate(elementMappinExpression, currentNode, XPathConstants.NODESET);
 				for(int e= 0 ; e< collectionElementNodes.getLength() ; e++) {
 					Serializable deserializedSingleElement = new Deserializer().deserializeSubproperties((Serializable)propertyClass.newInstance(), collectionElementNodes.item(e), elementMapping.getMappings());
