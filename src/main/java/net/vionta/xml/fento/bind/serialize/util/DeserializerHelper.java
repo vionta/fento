@@ -50,6 +50,7 @@ public class DeserializerHelper {
 			return mainObject;
 		 	
 		} catch (Exception e) {
+			e.printStackTrace();
 			BindingException bindException = new BindingException();
 			log.error("Error getting class instance: "+e);
 			if(clazz != null) {
